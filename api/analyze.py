@@ -40,11 +40,11 @@ class handler(BaseHTTPRequestHandler):
             chart_frame = pd.DataFrame({"close": close, "regime": raw["hmm_regime"]}, index=raw.index)
             # Keep the model trained on the full 5-year history, but show only
             # the latest 10 trading sessions in the dashboard chart.
-            recent = chart_frame.tail(10).dropna()
+            recent = chart_frame.tail(15).dropna()
             history = [{"date": date.strftime("%Y-%m-%d"), "close": round(float(row["close"]), 2), "regime": str(row["regime"])} for date, row in recent.iterrows()]
             state_summary = result["state_summary"].to_dict(orient="records")
             transition = {str(idx): {str(col): round(float(value), 4) for col, value in row.items()} for idx, row in result["transition_matrix"].iterrows()}
-            response = {"ticker": symbol, "period": "5 years for model; latest 10 trading sessions displayed", "observations": int(len(prices)),
+            response = {"ticker": symbol, "period": "5 years for model; latest 15 trading sessions displayed", "observations": int(len(prices)), "recent_observations": int(len(recent)),
                 "current_price": round(float(prices["Close"].iloc[-1]), 2), "last_updated": prices.index[-1].strftime("%Y-%m-%d"),
                 "current_regime": result["current_regime"], "annualized_volatility": round(result["annualized_volatility"], 4),
                 "probabilities": {k: round(float(v), 6) for k, v in result["regime_probabilities"].items()},
