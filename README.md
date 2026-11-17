@@ -1,16 +1,22 @@
-# MarketSense — Stock Market Regime Analyzer
+# MarketSense
 
-A dashboard + chat-style interface for classifying the historical behaviour of NSE stocks using up to five years of daily data from Yahoo Finance.
+MarketSense is a stock market dashboard that studies recent price movement and groups market behaviour into regimes such as bullish, bearish, sideways and high volatility.
 
-## Models
-- **Gaussian Hidden Markov Model (HMM):** four latent states with diagonal Gaussian emissions.
-- **Baum–Welch EM:** forward-backward E-step and parameter updates for initial probabilities, transitions, means and variances.
-- **Bayesian Network:** Trend, volatility, momentum and HMM regime are used as evidence for the final regime posterior.
-- **Features:** daily return, 20-day realized volatility, 20-day momentum and volume change.
+## What it shows
 
-The Bayesian Network's parent priors are estimated from the data. Its child conditional probability table currently uses explicit domain assumptions rather than labelled training outcomes. Posterior values should therefore be treated as model estimates, not calibrated real-world probabilities.
+- Recent price chart and current market regime
+- Regime probabilities and annualized volatility
+- A chat panel for questions about the selected stock
+- Analysis for supported NSE stocks and NVIDIA
+
+## How it works
+
+The analysis uses a Gaussian Hidden Markov Model trained with Baum–Welch EM. A Bayesian Network combines market features with the inferred regime to produce the displayed probabilities.
+
+The dashboard displays the latest 15 trading sessions. The model uses a longer historical series for fitting so that its estimates are not based on only 15 observations.
 
 ## Run locally
+
 Use Python 3.12.
 
 ```bash
@@ -18,6 +24,7 @@ python -m venv .venv
 ```
 
 Windows PowerShell:
+
 ```powershell
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -26,6 +33,7 @@ vercel dev
 ```
 
 macOS/Linux:
+
 ```bash
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -33,35 +41,35 @@ npm install -g vercel
 vercel dev
 ```
 
-Open the local URL printed by Vercel. Search for symbols such as `RELIANCE`, `TCS` or `INFY`. NSE symbols are automatically suffixed with `.NS`.
-
-## Deploy to Vercel
-1. Import this GitHub repository into Vercel.
-2. Select **Other** as the framework preset.
-3. Leave the build command and output directory empty.
-4. Deploy. Vercel serves `index.html` and runs `api/analyze.py` as a Python serverless function.
+Open the local URL printed by Vercel.
 
 ## API
-Send `POST /api/analyze` with JSON:
+
+Send a POST request to `/api/analyze`:
+
 ```json
 {"ticker":"RELIANCE"}
 ```
 
 ## CLI
+
 ```bash
 python run.py TCS
 ```
 
-Optional CSV input must contain `Date`, `Close`, `High`, `Low` and `Volume` columns:
+To analyse a CSV file:
+
 ```bash
 python run.py TCS --csv sample.csv
 ```
 
 ## Tests
+
 ```bash
 pip install pytest
 pytest -q
 ```
 
-## Notes
-Yahoo Finance through yfinance is an unofficial data source and may be rate-limited. The project is educational: it classifies observed historical behaviour and does not predict exact prices or provide investment advice.
+## Data
+
+Market data is fetched through yfinance. The source may be delayed, unavailable or rate-limited. Model probabilities are estimates based on the available historical data.
