@@ -12,7 +12,7 @@ def fetch_history(ticker: str, period: str = "5y") -> pd.DataFrame:
     symbol = ticker.strip().upper()
     if not symbol:
         raise ValueError("Ticker cannot be empty.")
-    if not symbol.endswith((".NS", ".BO")):
+    if symbol not in {"NVDA"} and not symbol.endswith((".NS", ".BO")):
         symbol += ".NS"
     # Cache daily history as CSV in /tmp for six hours. Vercel's writable
     # filesystem is ephemeral, so a cold start may fetch the data again.
