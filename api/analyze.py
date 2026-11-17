@@ -58,4 +58,14 @@ class handler(BaseHTTPRequestHandler):
             self.send_json(500, {"error": f"Analysis failed ({type(exc).__name__}): {str(exc)[:220]}"})
 
     def do_GET(self):
+        # Vercel currently routes the project root to this Python handler.
+        # Serve the dashboard there, while keeping the API endpoint POST-only.
+        if self.path in ("/", "/index.html"):
+            page = (ROOT / "index.html").read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(page)
+            return
         self.send_json(405, {"error": "Send a POST request to this endpoint."})
