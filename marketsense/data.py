@@ -1,4 +1,6 @@
 from __future__ import annotations
+from pathlib import Path
+import time
 import pandas as pd
 
 def fetch_history(ticker: str, period: str = "5y") -> pd.DataFrame:
@@ -12,7 +14,21 @@ def fetch_history(ticker: str, period: str = "5y") -> pd.DataFrame:
         raise ValueError("Ticker cannot be empty.")
     if not symbol.endswith((".NS", ".BO")):
         symbol += ".NS"
-    frame = yf.download(symbol, period=period, interval="1d", auto_adjust=True, progress=False, threads=False)
+    # Cache daily history as CSV in /tmp for six hours. Vercel's writable
+    # filesystem is ephemeral, so a cold start may fetch the data again.
+    cache_dir = Path("/tmp/marketsense_cache")
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_file = cache_dir / (symbol.replace(".", "_") + "_" + period + ".csv")
+    frame = None
+    if cache_file.exists() and time.time() - cache_file.stat().st_mtime < 6 * 60 * 60:
+        try:
+            frame = pd.read_csv(cache_file, index_col=0, parse_dates=True)
+        except Exception:
+            frame = None
+    if frame is None or frame.empty:
+        frame = yf.download(symbol, period=period, interval="1d", auto_adjust=True, progress=False, threads=False)
+        if frame is not None and not frame.empty:
+            frame.to_csv(cache_file)
     if frame is None or frame.empty:
         raise ValueError(f"No data returned for {symbol}. Check the NSE ticker.")
     if isinstance(frame.columns, pd.MultiIndex):
